@@ -1,7 +1,15 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import pdfParse from 'pdf-parse';
+import { createRequire } from 'module';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 import type {
   ResumeAnalysisRequest,

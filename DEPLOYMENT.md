@@ -33,7 +33,16 @@ gcloud services enable \
 
 ## 3. Database & Caching Setup
 
-### A. Google Cloud SQL (PostgreSQL with pgvector)
+### A. PostgreSQL Database (Neon DB — Recommended)
+Since you are using **Neon DB** for PostgreSQL, you can completely skip provisioning a Google Cloud SQL instance. 
+1. Get your connection string from your Neon Console (e.g., `postgresql://neondb_owner:[PASSWORD]@[ENDPOINT].neon.tech/neondb?sslmode=require`).
+2. Make sure you run the migrations locally or against your Neon endpoint before deploying:
+   ```bash
+   npm run db:migrate
+   ```
+
+### B. Google Cloud SQL (Alternative — PostgreSQL with pgvector)
+*If you decide to switch back to GCP managed Postgres:*
 1. Provision a PostgreSQL instance (v15 or higher) on Google Cloud SQL:
    ```bash
    gcloud sql instances create recruiter-os-db \
@@ -72,8 +81,8 @@ Store sensitive API credentials securely in Google Cloud Secret Manager so they 
 # Gemini API Key
 echo -n "your-gemini-api-key" | gcloud secrets create GEMINI_API_KEY --data-file=-
 
-# Database Credentials Connection String
-echo -n "postgresql://postgres:[PASSWORD]@[CLOUDSQL_IP]:5432/recruiter_os" | gcloud secrets create DATABASE_URL --data-file=-
+# Database Credentials Connection String (Use your Neon DB connection string)
+echo -n "postgresql://neondb_owner:[PASSWORD]@[ENDPOINT].neon.tech/neondb?sslmode=require" | gcloud secrets create DATABASE_URL --data-file=-
 
 # Session and JWT Encryption Keys
 echo -n "your-jwt-production-secret" | gcloud secrets create JWT_SECRET --data-file=-

@@ -145,20 +145,25 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {jobsLoading ? (
               <JobCardSkeleton count={6} />
-            ) : !jobs || jobs.length === 0 ? (
+            ) : !jobs?.data || jobs.data.length === 0 ? (
               <div className="col-span-full">
                 <EmptyState onSearchClick={() => setIsDiscoverOpen(true)} />
               </div>
             ) : (
-              jobs.map((job) => (
+              jobs.data.map((job) => (
                 <JobCard
                   key={job.id}
                   job={job}
                   onClick={() => {
                     // Navigate to appropriate section based on stage
-                    if (job.pipelineStage === 'optimize') {
+                    if (job.pipelineStage === 'discover' || job.pipelineStage === 'analyze') {
+                      sessionStorage.setItem('selected_job_id', job.id);
                       window.location.hash = '#/resume';
-                    } else if (job.pipelineStage === 'outreach') {
+                    } else if (job.pipelineStage === 'optimize') {
+                      sessionStorage.setItem('selected_job_id', job.id);
+                      window.location.hash = '#/outreach';
+                    } else if (job.pipelineStage === 'outreach' || job.pipelineStage === 'applied') {
+                      sessionStorage.setItem('selected_job_id', job.id);
                       window.location.hash = '#/outreach';
                     }
                   }}
@@ -168,7 +173,7 @@ export default function Dashboard() {
           </div>
 
           {/* Simple Pagination */}
-          {jobs && jobs.length > 0 && (
+          {jobs?.data && jobs.data.length > 0 && (
             <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
               <button
                 onClick={() => setPage((p) => Math.max(p - 1, 1))}
@@ -181,7 +186,7 @@ export default function Dashboard() {
               <span className="text-sm font-medium text-surface-400">Page {page}</span>
               <button
                 onClick={() => setPage((p) => p + 1)}
-                disabled={jobs.length < 10} // Assumed page size of 10 limit from api
+                disabled={jobs.data.length < jobs.meta.limit}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-white/10 text-surface-300 hover:bg-white/[0.04] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
               >
                 Next

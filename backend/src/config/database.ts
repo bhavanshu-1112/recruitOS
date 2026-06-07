@@ -37,18 +37,30 @@ export async function initDatabase(): Promise<void> {
     return;
   }
 
-  const { host, port, name, user, password } = config.database;
+  const { url, host, port, name, user, password } = config.database;
 
-  pool = new pg.Pool({
-    host,
-    port,
-    database: name,
-    user,
-    password,
-    max: 20,
-    idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 5_000,
-  });
+  // When DATABASE_URL is provided (e.g. Neon), connect via connection string
+  // with SSL required. Otherwise fall back to individual fields (local Docker).
+  const poolConfig: pg.PoolConfig = url
+    ? {
+        connectionString: url,
+        ssl: { rejectUnauthorized: false },
+        max: 20,
+        idleTimeoutMillis: 30_000,
+        connectionTimeoutMillis: 30_000,
+      }
+    : {
+        host,
+        port,
+        database: name,
+        user,
+        password,
+        max: 20,
+        idleTimeoutMillis: 30_000,
+        connectionTimeoutMillis: 30_000,
+      };
+
+  pool = new pg.Pool(poolConfig);
 
   // Log pool-level events
   pool.on('error', (err: Error) => {
@@ -76,21 +88,21 @@ export async function initDatabase(): Promise<void> {
       // Test connectivity
       const result = await client.query('SELECT NOW() AS current_time');
       logger.info('Database connection verified', {
-        host,
-        port,
-        database: name,
+        mode: url ? 'connection-string' : 'individual-fields',
+        ...(url ? {} : { host, port, database: name }),
         serverTime: result.rows[0]?.current_time,
       });
     } finally {
       client.release();
     }
   } catch (err) {
+    console.error('Database connection error details:', err);
     const message = err instanceof Error ? err.message : String(err);
-    logger.error('Failed to initialize database', { error: message });
+    logger.error('Failed to initialize database', { error: message || String(err) });
     // Clean up the pool on failure
     await pool.end().catch(() => {});
     pool = null;
-    throw new Error(`Database initialization failed: ${message}`);
+    throw new Error(`Database initialization failed: ${message || String(err)}`);
   }
 }
 

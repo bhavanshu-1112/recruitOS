@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload,
@@ -166,11 +166,33 @@ function SubScoreBar({
 export default function ResumeOptimizer() {
   const [file, setFile] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState('');
+  const [jobListingId, setJobListingId] = useState<string | null>(null);
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<StoredAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load pre-selected job from dashboard
+  useEffect(() => {
+    const selectedJobId = sessionStorage.getItem('selected_job_id');
+    if (selectedJobId) {
+      sessionStorage.removeItem('selected_job_id'); // Clear it immediately
+      fetch(`/api/jobs/${selectedJobId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setJobDescription(data.data.raw_text || data.data.rawText || '');
+            setJobListingId(data.data.id);
+            setSelectedJobTitle(`${data.data.title} at ${data.data.company}`);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load selected job details:', err);
+        });
+    }
+  }, []);
 
   // -----------------------------------------------------------------------
   // File handling
@@ -221,6 +243,9 @@ export default function ResumeOptimizer() {
       const formData = new FormData();
       formData.append('resume', file);
       formData.append('jobDescription', jobDescription);
+      if (jobListingId) {
+        formData.append('jobListingId', jobListingId);
+      }
 
       const response = await fetch('/api/resume/analyze', {
         method: 'POST',
@@ -333,19 +358,44 @@ export default function ResumeOptimizer() {
 
               {/* Job Description Textarea */}
               <div className="space-y-3">
-                <label
-                  htmlFor="jd-input"
-                  className="text-sm font-medium text-gray-300 flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Job Description
-                </label>
+                <div className="flex justify-between items-center">
+                  <label
+                    htmlFor="jd-input"
+                    className="text-sm font-medium text-gray-300 flex items-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Job Description
+                  </label>
+                  {selectedJobTitle && (
+                    <span className="flex items-center gap-1.5 text-xs bg-purple-500/10 border border-purple-500/30 text-purple-300 px-2.5 py-1 rounded-full">
+                      <span>Optimizing for: <strong>{selectedJobTitle}</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setJobListingId(null);
+                          setSelectedJobTitle(null);
+                          setJobDescription('');
+                        }}
+                        className="hover:text-white transition-colors"
+                        title="Clear preselected job"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
                 <textarea
                   id="jd-input"
                   className="w-full h-[calc(100%-2rem)] min-h-[200px] p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-gray-200 placeholder-gray-600 resize-none focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition"
                   placeholder="Paste the full job description here..."
                   value={jobDescription}
-                  onChange={(e) => setJobDescription(e.target.value)}
+                  onChange={(e) => {
+                    setJobDescription(e.target.value);
+                    if (selectedJobTitle) {
+                      setJobListingId(null);
+                      setSelectedJobTitle(null);
+                    }
+                  }}
                 />
                 <p className="text-right text-xs text-gray-500">
                   {jobDescription.length} characters

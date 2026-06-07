@@ -49,6 +49,7 @@ interface ResumeAnalysisSummary {
   resumeFileName: string;
   overallScore: number;
   createdAt: string;
+  jobListingId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -255,18 +256,30 @@ export default function OutreachGenerator() {
       .then((r) => r.json())
       .then((data) => {
         if (data.success && data.data) {
-          setAnalyses(
-            data.data.map((a: Record<string, unknown>) => ({
-              id: a.id as string,
-              resumeFileName: (a.resumeFileName ?? a.resume_file_name ?? 'resume.pdf') as string,
-              overallScore: Number(a.overallScore ?? a.overall_score ?? 0),
-              createdAt: a.createdAt as string,
-            })),
-          );
+          const mappedAnalyses = data.data.map((a: Record<string, any>) => ({
+            id: a.id as string,
+            resumeFileName: (a.resumeFileName ?? a.resume_file_name ?? 'resume.pdf') as string,
+            overallScore: Number(a.overallScore ?? a.overall_score ?? 0),
+            createdAt: a.createdAt as string,
+            jobListingId: (a.jobListingId ?? a.job_listing_id ?? undefined) as string | undefined,
+          }));
+          setAnalyses(mappedAnalyses);
+
+          // Check if there is a selectedJobId to match
+          const selectedJobId = sessionStorage.getItem('selected_job_id');
+          if (selectedJobId) {
+            sessionStorage.removeItem('selected_job_id'); // Clear it immediately
+            const matchingAnalysis = mappedAnalyses.find(
+              (ana: ResumeAnalysisSummary) => ana.jobListingId === selectedJobId
+            );
+            if (matchingAnalysis) {
+              setSelectedAnalysisId(matchingAnalysis.id);
+            }
+          }
         }
       })
-      .catch(() => {
-        // Silently fail — user can still paste an ID
+      .catch((err) => {
+        console.error('Failed to load resume analyses list:', err);
       });
   }, []);
 

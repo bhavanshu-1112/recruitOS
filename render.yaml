@@ -1,0 +1,38 @@
+services:
+  # ── Backend API (Node.js / Express) ─────────────────
+  - type: web
+    name: recruiter-os-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        sync: false        # Set manually in Render dashboard
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false        # e.g. https://recruiter-os-backend.onrender.com/api/auth/google/callback
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false        # e.g. https://recruiter-os.vercel.app
+      - key: GCS_BUCKET_NAME
+        sync: false
+      - key: GCS_PROJECT_ID
+        sync: false
+    healthCheckPath: /health

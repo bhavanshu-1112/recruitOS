@@ -1,8 +1,21 @@
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// In production (Render), env vars are injected by the platform — no .env file needed.
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
+}
+
 const config = {
   port: parseInt(process.env.PORT || '8000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
 
   database: {
+    url: process.env.DATABASE_URL || '',
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
     name: process.env.DB_NAME || 'recruiter_os',

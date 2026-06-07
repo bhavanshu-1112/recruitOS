@@ -34,13 +34,13 @@ export function usePipeline() {
 
 /** Paginated job list, optionally filtered by pipeline stage. */
 export function useJobs(stage?: PipelineStage, page = 1) {
-  return useQuery<DashboardJob[]>({
+  return useQuery<{ data: DashboardJob[]; meta: { page: number; limit: number; total: number } }>({
     queryKey: ['dashboard', 'jobs', stage ?? 'all', page],
     queryFn: () => {
       const params = new URLSearchParams();
       if (stage) {params.set('stage', stage);}
       params.set('page', String(page));
-      return fetchJSON<DashboardJob[]>(`/api/dashboard/jobs?${params.toString()}`);
+      return fetchJSON<{ data: DashboardJob[]; meta: { page: number; limit: number; total: number } }>(`/api/dashboard/jobs?${params.toString()}`);
     },
     refetchInterval: REFETCH,
   });

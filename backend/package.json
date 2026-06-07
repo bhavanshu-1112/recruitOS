@@ -4,6 +4,7 @@
   "private": true,
   "description": "RecruiterOS backend API server",
   "main": "dist/server.js",
+  "type": "module",
   "engines": {
     "node": ">=18"
   },
@@ -17,7 +18,7 @@
     "lint": "eslint src/ --ext .ts",
     "lint:fix": "eslint src/ --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "db:migrate": "node dist/db/run-migrations.js"
+    "db:migrate": "tsx src/db/run-migrations.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.14.0",
@@ -66,6 +67,7 @@
     "nodemon": "^3.1.9",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^5.7.3"
   }
 }
