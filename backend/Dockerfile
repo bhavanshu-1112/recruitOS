@@ -4,7 +4,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install
 
 COPY tsconfig.json ./
 COPY src/ ./src/
@@ -19,7 +19,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --chown=node:node package.json package-lock.json* ./
-RUN npm ci --omit=dev && chown -R node:node /app/node_modules
+RUN npm install --omit=dev && chown -R node:node /app/node_modules
 
 COPY --from=build --chown=node:node /app/dist ./dist
 
